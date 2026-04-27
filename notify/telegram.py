@@ -19,7 +19,7 @@ class TelegramNotifier:
     """
 
     def __init__(self):
-        self._bot: object | None = None
+        self._bot: tg.Bot | None = None  # type: ignore[name-defined]
         self._enabled = False
 
         if not _TELEGRAM_AVAILABLE:

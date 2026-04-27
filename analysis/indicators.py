@@ -26,7 +26,7 @@ def compute_indicators(df: pd.DataFrame) -> pd.DataFrame:
     df["rsi"] = ta.rsi(df["close"], length=14)
 
     # Bollinger Bands
-    bb = ta.bbands(df["close"], length=20, std=2)
+    bb = ta.bbands(df["close"], length=20, std=2.0)  # type: ignore[arg-type]
     if bb is not None and not bb.empty:
         cols = bb.columns.tolist()
         upper = next((c for c in cols if c.startswith("BBU")), None)

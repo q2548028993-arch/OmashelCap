@@ -187,6 +187,7 @@ class TradingBot:
         self.tracker.close(contract_id, profit, is_win)
         self.db.log_close(contract_id, profit, is_win)
 
+        assert self.circuit_breaker is not None
         if is_win:
             self.circuit_breaker.on_win()
         else:

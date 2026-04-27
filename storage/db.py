@@ -24,6 +24,7 @@ class TradeDB:
         logger.info(f"Trade database connected: {DB_PATH.resolve()}")
 
     def _create_tables(self) -> None:
+        assert self._conn is not None
         self._conn.execute("""
             CREATE TABLE IF NOT EXISTS trades (
                 id              INTEGER PRIMARY KEY AUTOINCREMENT,
@@ -45,6 +46,7 @@ class TradeDB:
         self._conn.commit()
 
     def log_open(self, contract_id: int, signal: TradeSignal) -> int:
+        assert self._conn is not None
         cursor = self._conn.execute(
             """
             INSERT INTO trades
@@ -65,9 +67,10 @@ class TradeDB:
             ),
         )
         self._conn.commit()
-        return cursor.lastrowid
+        return cursor.lastrowid or 0
 
     def log_close(self, contract_id: int, profit: float, is_win: bool) -> None:
+        assert self._conn is not None
         self._conn.execute(
             """
             UPDATE trades

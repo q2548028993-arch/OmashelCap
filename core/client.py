@@ -2,6 +2,7 @@ import asyncio
 import json
 import logging
 from collections.abc import Callable
+from typing import Any
 
 import websockets
 from websockets.exceptions import ConnectionClosedError, ConnectionClosedOK
@@ -20,7 +21,7 @@ class DerivClient:
 
     def __init__(self, on_message: Callable[[dict], None]):
         self._on_message = on_message
-        self._ws: websockets.WebSocketClientProtocol | None = None
+        self._ws: Any | None = None
         self._connected = asyncio.Event()
         self._running = False
         self._req_id = 0
@@ -69,7 +70,7 @@ class DerivClient:
                 backoff = min(backoff * 2, 60)
 
     async def _receiver(self) -> None:
-        async for raw in self._ws:
+        async for raw in self._ws:  # type: ignore[union-attr]
             try:
                 msg = json.loads(raw)
                 if msg.get("msg_type") != "ping":
