@@ -1,5 +1,6 @@
 import { useEffect, useRef, useState } from 'react'
 import axios from 'axios'
+import { useQuery } from '@tanstack/react-query'
 import { createChart, AreaSeries } from 'lightweight-charts'
 import type { IChartApi, ISeriesApi } from 'lightweight-charts'
 
@@ -331,6 +332,123 @@ export function BacktestPanel() {
           )}
         </div>
       )}
+
+      <BacktestHistory />
+    </div>
+  )
+}
+
+interface HistoryRun {
+  id: number
+  ran_at: string
+  symbol: string
+  granularity: number
+  candle_count: number
+  total_trades: number
+  win_rate: number
+  roi_pct: number
+  total_pnl: number
+  profit_factor: number
+  max_drawdown_pct: number
+  min_score: number
+  elapsed_s: number
+}
+
+async function fetchHistory() {
+  const { data } = await axios.get<{ runs: HistoryRun[] }>('/api/backtest/history?limit=20')
+  return data.runs
+}
+
+function BacktestHistory() {
+  const { data: runs = [], isLoading, refetch } = useQuery({
+    queryKey: ['backtest-history'],
+    queryFn: fetchHistory,
+    refetchOnWindowFocus: false,
+  })
+
+  const granLabel = (g: number) => ({ 60: '1m', 300: '5m', 900: '15m', 3600: '1h' }[g] ?? `${g}s`)
+
+  return (
+    <div className="bg-slate-900/70 border border-slate-800 rounded-xl backdrop-blur-sm">
+      <div className="flex items-center justify-between px-5 py-4 border-b border-slate-800">
+        <div className="flex items-center gap-2">
+          <p className="text-slate-400 text-[10px] uppercase tracking-widest font-medium">Run History</p>
+          {runs.length > 0 && (
+            <span className="text-[10px] font-mono text-slate-600 bg-slate-800 px-1.5 py-0.5 rounded">
+              {runs.length}
+            </span>
+          )}
+        </div>
+        <button
+          onClick={() => refetch()}
+          className="text-[11px] text-slate-500 hover:text-slate-300 transition-colors"
+        >
+          ↺ Refresh
+        </button>
+      </div>
+
+      <div className="p-5">
+        {isLoading && (
+          <div className="flex items-center gap-2 text-slate-600">
+            <span className="w-3 h-3 border-2 border-slate-700 border-t-slate-500 rounded-full animate-spin" />
+            <span className="text-sm">Loading history...</span>
+          </div>
+        )}
+
+        {!isLoading && runs.length === 0 && (
+          <p className="text-slate-600 text-sm">No saved runs yet — run a backtest above to start logging.</p>
+        )}
+
+        {runs.length > 0 && (
+          <div className="overflow-x-auto">
+            <table className="w-full text-xs">
+              <thead>
+                <tr className="text-slate-600 text-[10px] uppercase tracking-widest">
+                  <th className="text-left pb-3 pr-4 font-medium">Time</th>
+                  <th className="text-left pb-3 pr-4 font-medium">Symbol</th>
+                  <th className="text-left pb-3 pr-4 font-medium">TF</th>
+                  <th className="text-right pb-3 pr-4 font-medium">Trades</th>
+                  <th className="text-right pb-3 pr-4 font-medium">Win %</th>
+                  <th className="text-right pb-3 pr-4 font-medium">ROI</th>
+                  <th className="text-right pb-3 pr-4 font-medium">P&L</th>
+                  <th className="text-right pb-3 pr-4 font-medium">PF</th>
+                  <th className="text-right pb-3 font-medium">DD%</th>
+                </tr>
+              </thead>
+              <tbody className="divide-y divide-slate-800/50">
+                {runs.map((r) => {
+                  const winPct = (r.win_rate * 100).toFixed(1)
+                  const winColor = r.win_rate >= 0.556 ? 'text-emerald-400' : r.win_rate >= 0.5 ? 'text-amber-400' : 'text-rose-400'
+                  const pnlColor = r.total_pnl >= 0 ? 'text-emerald-400' : 'text-rose-400'
+                  return (
+                    <tr key={r.id} className="hover:bg-slate-800/30 transition-colors">
+                      <td className="py-2.5 pr-4 font-mono text-slate-600 text-[11px]">
+                        {new Date(r.ran_at + 'Z').toLocaleString([], { month: 'short', day: 'numeric', hour: '2-digit', minute: '2-digit' })}
+                      </td>
+                      <td className="py-2.5 pr-4 font-mono text-slate-300 font-medium">{r.symbol}</td>
+                      <td className="py-2.5 pr-4 font-mono text-slate-500">{granLabel(r.granularity)}</td>
+                      <td className="py-2.5 pr-4 text-right font-mono text-slate-400">{r.total_trades}</td>
+                      <td className={`py-2.5 pr-4 text-right font-mono font-semibold ${winColor}`}>{winPct}%</td>
+                      <td className={`py-2.5 pr-4 text-right font-mono font-semibold ${pnlColor}`}>
+                        {r.roi_pct >= 0 ? '+' : ''}{r.roi_pct.toFixed(1)}%
+                      </td>
+                      <td className={`py-2.5 pr-4 text-right font-mono font-semibold ${pnlColor}`}>
+                        {r.total_pnl >= 0 ? '+' : ''}${r.total_pnl.toFixed(2)}
+                      </td>
+                      <td className={`py-2.5 pr-4 text-right font-mono ${r.profit_factor >= 1.2 ? 'text-emerald-400' : 'text-rose-400'}`}>
+                        {r.profit_factor >= 9999 ? '∞' : r.profit_factor.toFixed(2)}
+                      </td>
+                      <td className={`py-2.5 text-right font-mono ${r.max_drawdown_pct <= 5 ? 'text-emerald-400' : r.max_drawdown_pct <= 15 ? 'text-amber-400' : 'text-rose-400'}`}>
+                        {r.max_drawdown_pct.toFixed(1)}%
+                      </td>
+                    </tr>
+                  )
+                })}
+              </tbody>
+            </table>
+          </div>
+        )}
+      </div>
     </div>
   )
 }
