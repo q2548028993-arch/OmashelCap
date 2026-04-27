@@ -176,9 +176,7 @@ class TradeDB:
 
     def get_backtest_run(self, run_id: int) -> dict | None:
         assert self._conn is not None
-        row = self._conn.execute(
-            "SELECT * FROM backtest_runs WHERE id = ?", (run_id,)
-        ).fetchone()
+        row = self._conn.execute("SELECT * FROM backtest_runs WHERE id = ?", (run_id,)).fetchone()
         return dict(row) if row else None
 
     # ── Cleanup ───────────────────────────────────────────────────────────────
