@@ -1,5 +1,4 @@
 import logging
-from typing import List, Tuple
 
 import pandas as pd
 
@@ -36,10 +35,10 @@ def get_trend(df: pd.DataFrame) -> str:
     if len(swing_highs) < 2 or len(swing_lows) < 2:
         return "RANGE"
 
-    hh = swing_highs[-1] > swing_highs[-2]   # Higher High
-    hl = swing_lows[-1] > swing_lows[-2]      # Higher Low
-    lh = swing_highs[-1] < swing_highs[-2]    # Lower High
-    ll = swing_lows[-1] < swing_lows[-2]      # Lower Low
+    hh = swing_highs[-1] > swing_highs[-2]  # Higher High
+    hl = swing_lows[-1] > swing_lows[-2]  # Higher Low
+    lh = swing_highs[-1] < swing_highs[-2]  # Lower High
+    ll = swing_lows[-1] < swing_lows[-2]  # Lower Low
 
     if hh and hl:
         return "UPTREND"
@@ -68,7 +67,7 @@ def get_ema_trend(df: pd.DataFrame) -> str:
     return "RANGE"
 
 
-def get_recent_swing_levels(df: pd.DataFrame) -> Tuple[float, float]:
+def get_recent_swing_levels(df: pd.DataFrame) -> tuple[float, float]:
     """
     Returns (last_swing_high, last_swing_low) for use as TP/SL reference.
     """

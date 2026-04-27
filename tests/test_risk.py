@@ -1,6 +1,5 @@
-import pytest
-from risk.manager import RiskManager
 from risk.circuit_breaker import CircuitBreaker
+from risk.manager import RiskManager
 
 
 def test_stake_is_1_percent_of_balance():

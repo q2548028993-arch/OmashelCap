@@ -1,5 +1,4 @@
 import logging
-from typing import Optional
 
 from config.settings import settings
 
@@ -7,6 +6,7 @@ logger = logging.getLogger(__name__)
 
 try:
     import telegram as tg
+
     _TELEGRAM_AVAILABLE = True
 except ImportError:
     _TELEGRAM_AVAILABLE = False
@@ -19,7 +19,7 @@ class TelegramNotifier:
     """
 
     def __init__(self):
-        self._bot: Optional[object] = None
+        self._bot: tg.Bot | None = None  # type: ignore[name-defined]
         self._enabled = False
 
         if not _TELEGRAM_AVAILABLE:
@@ -59,7 +59,16 @@ class TelegramNotifier:
             f"Max stake: `${settings.MAX_STAKE:.2f}`"
         )
 
-    async def send_signal(self, direction: str, symbol: str, score: int, trend: str, zone: str, rsi: float, reason: str) -> None:
+    async def send_signal(
+        self,
+        direction: str,
+        symbol: str,
+        score: int,
+        trend: str,
+        zone: str,
+        rsi: float,
+        reason: str,
+    ) -> None:
         arrow = "📈" if direction == "CALL" else "📉"
         await self.send(
             f"{arrow} *Signal Detected*\n"
@@ -69,7 +78,9 @@ class TelegramNotifier:
             f"_{reason}_"
         )
 
-    async def trade_opened(self, direction: str, symbol: str, stake: float, score: int, reason: str) -> None:
+    async def trade_opened(
+        self, direction: str, symbol: str, stake: float, score: int, reason: str
+    ) -> None:
         arrow = "📈" if direction == "CALL" else "📉"
         await self.send(
             f"{arrow} *Trade Opened*\n"
@@ -78,7 +89,16 @@ class TelegramNotifier:
             f"_{reason}_"
         )
 
-    async def trade_closed(self, direction: str, symbol: str, profit: float, balance: float, wins: int, losses: int, session_pnl: float) -> None:
+    async def trade_closed(
+        self,
+        direction: str,
+        symbol: str,
+        profit: float,
+        balance: float,
+        wins: int,
+        losses: int,
+        session_pnl: float,
+    ) -> None:
         emoji = "✅" if profit > 0 else "❌"
         total = wins + losses
         win_rate = (wins / total * 100) if total > 0 else 0
@@ -93,12 +113,12 @@ class TelegramNotifier:
 
     async def circuit_tripped(self, reason: str) -> None:
         await self.send(
-            f"🚨 *Circuit Breaker Tripped*\n"
-            f"{reason}\n"
-            f"_Bot has stopped. Manual review required._"
+            f"🚨 *Circuit Breaker Tripped*\n{reason}\n_Bot has stopped. Manual review required._"
         )
 
-    async def send_daily_summary(self, wins: int, losses: int, session_pnl: float, balance: float) -> None:
+    async def send_daily_summary(
+        self, wins: int, losses: int, session_pnl: float, balance: float
+    ) -> None:
         total = wins + losses
         win_rate = (wins / total * 100) if total > 0 else 0
         emoji = "📊"
@@ -112,6 +132,5 @@ class TelegramNotifier:
 
     async def test_message(self) -> None:
         await self.send(
-            "✅ *OmashelCap — Telegram connected*\n"
-            "_You will receive trade alerts here._"
+            "✅ *OmashelCap — Telegram connected*\n_You will receive trade alerts here._"
         )

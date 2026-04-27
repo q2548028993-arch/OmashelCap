@@ -1,6 +1,6 @@
 import asyncio
 import logging
-from typing import Callable, Optional
+from collections.abc import Callable
 
 from config.settings import settings
 from data.models import TradeSignal
@@ -16,11 +16,11 @@ class OrderManager:
 
     def __init__(self, send_fn: Callable):
         self._send = send_fn
-        self._pending_proposal_id: Optional[str] = None
-        self._active_contract_id: Optional[int] = None
-        self._active_signal: Optional[TradeSignal] = None
+        self._pending_proposal_id: str | None = None
+        self._active_contract_id: int | None = None
+        self._active_signal: TradeSignal | None = None
         self._in_trade = asyncio.Event()
-        self._on_trade_close: Optional[Callable] = None
+        self._on_trade_close: Callable | None = None
 
     def set_on_trade_close(self, callback: Callable) -> None:
         self._on_trade_close = callback
@@ -39,16 +39,18 @@ class OrderManager:
             f"Requesting proposal | {signal.direction} {settings.SYMBOL} | "
             f"score={signal.score} | reason: {signal.reason}"
         )
-        await self._send({
-            "proposal": 1,
-            "amount": signal.stake,
-            "basis": "stake",
-            "contract_type": signal.direction,
-            "currency": "USD",
-            "duration": settings.TRADE_DURATION,
-            "duration_unit": settings.TRADE_DURATION_UNIT,
-            "symbol": settings.SYMBOL,
-        })
+        await self._send(
+            {
+                "proposal": 1,
+                "amount": signal.stake,
+                "basis": "stake",
+                "contract_type": signal.direction,
+                "currency": "USD",
+                "duration": settings.TRADE_DURATION,
+                "duration_unit": settings.TRADE_DURATION_UNIT,
+                "symbol": settings.SYMBOL,
+            }
+        )
 
     async def on_proposal(self, message: dict) -> None:
         proposal = message.get("proposal", {})
@@ -61,10 +63,12 @@ class OrderManager:
         logger.info(f"Proposal received | id={proposal_id} | ask_price={ask_price}")
         self._pending_proposal_id = proposal_id
 
-        await self._send({
-            "buy": proposal_id,
-            "price": self._active_signal.stake,
-        })
+        await self._send(
+            {
+                "buy": proposal_id,
+                "price": self._active_signal.stake,
+            }
+        )
 
     def on_buy(self, message: dict) -> None:
         buy = message.get("buy", {})
@@ -83,11 +87,13 @@ class OrderManager:
         asyncio.create_task(self._subscribe_contract(contract_id))
 
     async def _subscribe_contract(self, contract_id: int) -> None:
-        await self._send({
-            "proposal_open_contract": 1,
-            "contract_id": contract_id,
-            "subscribe": 1,
-        })
+        await self._send(
+            {
+                "proposal_open_contract": 1,
+                "contract_id": contract_id,
+                "subscribe": 1,
+            }
+        )
 
     def on_proposal_open_contract(self, message: dict) -> None:
         poc = message.get("proposal_open_contract", {})

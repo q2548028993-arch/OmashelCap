@@ -1,5 +1,4 @@
 import logging
-from typing import Optional
 
 import pandas as pd
 
@@ -50,7 +49,7 @@ def detect_zone(df: pd.DataFrame) -> str:
     return "NONE"
 
 
-def get_zone_boundaries(df: pd.DataFrame, zone_type: str) -> Optional[tuple]:
+def get_zone_boundaries(df: pd.DataFrame, zone_type: str) -> tuple | None:
     """
     Returns (zone_low, zone_high) for the most recent zone of zone_type.
     Used by risk manager to set TP near the zone boundary.
@@ -71,10 +70,14 @@ def get_zone_boundaries(df: pd.DataFrame, zone_type: str) -> Optional[tuple]:
         is_bearish = candle["close"] < candle["open"]
 
         if zone_type == "DEMAND" and is_bullish:
-            return (float(min(candle["open"], candle["close"])),
-                    float(max(candle["open"], candle["close"])))
+            return (
+                float(min(candle["open"], candle["close"])),
+                float(max(candle["open"], candle["close"])),
+            )
         if zone_type == "SUPPLY" and is_bearish:
-            return (float(min(candle["open"], candle["close"])),
-                    float(max(candle["open"], candle["close"])))
+            return (
+                float(min(candle["open"], candle["close"])),
+                float(max(candle["open"], candle["close"])),
+            )
 
     return None

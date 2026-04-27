@@ -1,7 +1,6 @@
 import logging
-from dataclasses import dataclass, field
+from dataclasses import dataclass
 from datetime import datetime
-from typing import List, Optional
 
 from data.models import TradeSignal
 
@@ -13,7 +12,7 @@ class TradeRecord:
     contract_id: int
     signal: TradeSignal
     opened_at: datetime
-    closed_at: Optional[datetime] = None
+    closed_at: datetime | None = None
     profit: float = 0.0
     is_win: bool = False
 
@@ -28,7 +27,7 @@ class TradeTracker:
     """
 
     def __init__(self):
-        self._trades: List[TradeRecord] = []
+        self._trades: list[TradeRecord] = []
 
     def open(self, contract_id: int, signal: TradeSignal) -> TradeRecord:
         record = TradeRecord(
@@ -39,7 +38,7 @@ class TradeTracker:
         self._trades.append(record)
         return record
 
-    def close(self, contract_id: int, profit: float, is_win: bool) -> Optional[TradeRecord]:
+    def close(self, contract_id: int, profit: float, is_win: bool) -> TradeRecord | None:
         record = self._find(contract_id)
         if record:
             record.closed_at = datetime.utcnow()
@@ -47,7 +46,7 @@ class TradeTracker:
             record.is_win = is_win
         return record
 
-    def _find(self, contract_id: int) -> Optional[TradeRecord]:
+    def _find(self, contract_id: int) -> TradeRecord | None:
         for t in self._trades:
             if t.contract_id == contract_id:
                 return t
@@ -81,6 +80,6 @@ class TradeTracker:
         return (
             f"Trades: {self.total_trades} | "
             f"W/L: {self.wins}/{self.losses} | "
-            f"Win rate: {self.win_rate*100:.1f}% | "
+            f"Win rate: {self.win_rate * 100:.1f}% | "
             f"P&L: {self.total_profit:+.2f}"
         )

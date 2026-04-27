@@ -1,10 +1,10 @@
 import logging
-from typing import Callable, Dict
+from collections.abc import Callable
 
 logger = logging.getLogger(__name__)
 
 # Maps msg_type → handler function
-HandlerMap = Dict[str, Callable[[dict], None]]
+HandlerMap = dict[str, Callable[[dict], None]]
 
 
 class MessageRouter:
@@ -24,7 +24,9 @@ class MessageRouter:
         error = message.get("error")
 
         if error:
-            logger.error(f"API error [{msg_type}]: {error.get('message')} (code: {error.get('code')})")
+            logger.error(
+                f"API error [{msg_type}]: {error.get('message')} (code: {error.get('code')})"
+            )
             return
 
         if msg_type is None:

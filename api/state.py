@@ -1,6 +1,6 @@
 import asyncio
+import contextlib
 from dataclasses import dataclass, field
-from typing import Optional
 
 from data.models import TradeSignal
 
@@ -10,7 +10,7 @@ class BotState:
     running: bool = False
     balance: float = 0.0
     currency: str = "USD"
-    account_id: Optional[str] = None
+    account_id: str | None = None
     is_virtual: bool = True
 
     # Circuit breaker
@@ -26,11 +26,11 @@ class BotState:
     session_pnl: float = 0.0
 
     # Latest signal
-    last_signal: Optional[TradeSignal] = None
+    last_signal: TradeSignal | None = None
 
     # Internal
     _ws_clients: list = field(default_factory=list)
-    _task: Optional[asyncio.Task] = None
+    _task: asyncio.Task | None = None
 
     async def broadcast(self, event: str, data: dict) -> None:
         dead = []
@@ -53,10 +53,8 @@ class BotState:
         self.running = False
         if self._task and not self._task.done():
             self._task.cancel()
-            try:
+            with contextlib.suppress(asyncio.CancelledError):
                 await self._task
-            except asyncio.CancelledError:
-                pass
 
 
 bot_state = BotState()

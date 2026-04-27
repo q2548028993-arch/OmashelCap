@@ -2,6 +2,7 @@
 Fetch historical OHLC candles from Deriv's WebSocket API.
 Falls back to synthetic Brownian-motion candles when USE_MOCK=true or connection fails.
 """
+
 import json
 import logging
 import math
@@ -37,15 +38,19 @@ async def fetch_candles(symbol: str, granularity: int, count: int) -> pd.DataFra
 async def _fetch_from_deriv(symbol: str, granularity: int, count: int) -> pd.DataFrame:
     url = f"wss://ws.derivws.com/websockets/v3?app_id={settings.APP_ID}"
     async with websockets.connect(url, ping_interval=None) as ws:
-        await ws.send(json.dumps({
-            "ticks_history": symbol,
-            "adjust_start_time": 1,
-            "count": count,
-            "end": "latest",
-            "start": 1,
-            "style": "candles",
-            "granularity": granularity,
-        }))
+        await ws.send(
+            json.dumps(
+                {
+                    "ticks_history": symbol,
+                    "adjust_start_time": 1,
+                    "count": count,
+                    "end": "latest",
+                    "start": 1,
+                    "style": "candles",
+                    "granularity": granularity,
+                }
+            )
+        )
         raw = json.loads(await ws.recv())
 
     if "error" in raw:
@@ -68,13 +73,17 @@ def _synthetic_candles(symbol: str, granularity: int, count: int) -> pd.DataFram
     """Geometric Brownian Motion synthetic OHLC — realistic enough for strategy testing."""
     # Volatility calibrated per symbol
     vol_map = {
-        "R_10": 0.0003, "R_25": 0.0006, "R_50": 0.001,
-        "R_75": 0.0018, "R_100": 0.0025,
+        "R_10": 0.0003,
+        "R_25": 0.0006,
+        "R_50": 0.001,
+        "R_75": 0.0018,
+        "R_100": 0.0025,
     }
     drift = 0.0
     sigma = vol_map.get(symbol, 0.001)
 
     import time
+
     end_epoch = int(time.time()) - granularity
     start_price = 1000.0 + random.uniform(-200, 200)
 
@@ -86,8 +95,8 @@ def _synthetic_candles(symbol: str, granularity: int, count: int) -> pd.DataFram
         o = price
         c = round(o * math.exp(ret), 5)
         h = round(max(o, c) * (1 + abs(random.gauss(0, sigma * 0.5))), 5)
-        l = round(min(o, c) * (1 - abs(random.gauss(0, sigma * 0.5))), 5)
-        rows.append({"epoch": epoch, "open": o, "high": h, "low": l, "close": c})
+        lo = round(min(o, c) * (1 - abs(random.gauss(0, sigma * 0.5))), 5)
+        rows.append({"epoch": epoch, "open": o, "high": h, "low": lo, "close": c})
         price = c
 
     logger.info(f"Generated {count} synthetic candles for {symbol}")
