@@ -41,7 +41,7 @@ export function useWebSocket() {
             })
             break
           case 'signal':
-            setSignal(msg.data as Parameters<typeof setSignal>[0])
+            setSignal(msg.data as unknown as Parameters<typeof setSignal>[0])
             break
           case 'trade_closed':
             setStatus({
