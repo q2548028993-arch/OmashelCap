@@ -24,28 +24,53 @@ export function BotControls() {
   }
 
   return (
-    <div className="bg-gray-900 border border-gray-800 rounded-lg p-4 flex items-center justify-between">
-      <div className="flex items-center gap-3">
-        <div className={`w-2 h-2 rounded-full ${connected ? 'bg-emerald-400' : 'bg-red-500'} animate-pulse`} />
-        <span className="text-xs text-gray-400">{connected ? 'Connected' : 'Disconnected'}</span>
-        {cbTripped && (
-          <span className="text-xs text-red-400 bg-red-950 px-2 py-0.5 rounded border border-red-800">
-            CIRCUIT BREAKER: {cbReason}
-          </span>
-        )}
-      </div>
+    <div className="space-y-2">
+      {cbTripped && (
+        <div className="flex items-center gap-3 bg-rose-950/60 border border-rose-800/60 rounded-xl px-4 py-3">
+          <span className="text-rose-400 text-lg">⚠</span>
+          <div>
+            <p className="text-rose-300 text-sm font-semibold">Circuit Breaker Active</p>
+            <p className="text-rose-500 text-xs">{cbReason} — restart the bot to resume</p>
+          </div>
+        </div>
+      )}
 
-      <button
-        onClick={toggle}
-        disabled={loading || !connected || cbTripped}
-        className={`px-5 py-2 rounded text-sm font-bold transition-all disabled:opacity-40 disabled:cursor-not-allowed
-          ${running
-            ? 'bg-red-800 hover:bg-red-700 text-white'
-            : 'bg-emerald-700 hover:bg-emerald-600 text-white'
-          }`}
-      >
-        {loading ? '...' : running ? 'STOP BOT' : 'START BOT'}
-      </button>
+      <div className="bg-slate-900/70 border border-slate-800 rounded-xl px-4 py-3 flex items-center justify-between backdrop-blur-sm">
+        <div className="flex items-center gap-4">
+          <div className="flex items-center gap-2">
+            <span className={`w-2 h-2 rounded-full ${connected ? 'bg-emerald-400 pulse-dot' : 'bg-rose-500'}`} />
+            <span className="text-xs text-slate-400 font-medium">
+              {connected ? 'Connected' : 'Disconnected'}
+            </span>
+          </div>
+          <div className="w-px h-4 bg-slate-800" />
+          <span className={`text-xs font-semibold px-2 py-0.5 rounded-md ${
+            running
+              ? 'text-emerald-400 bg-emerald-950/60 border border-emerald-900/60'
+              : 'text-slate-500 bg-slate-800/60 border border-slate-700/40'
+          }`}>
+            {running ? 'RUNNING' : 'IDLE'}
+          </span>
+        </div>
+
+        <button
+          onClick={toggle}
+          disabled={loading || !connected || cbTripped}
+          className={`px-6 py-2 rounded-lg text-sm font-semibold tracking-wide transition-all duration-150
+            disabled:opacity-40 disabled:cursor-not-allowed select-none
+            ${running
+              ? 'bg-rose-600 hover:bg-rose-500 text-white glow-red'
+              : 'bg-emerald-600 hover:bg-emerald-500 text-white glow-green'
+            }`}
+        >
+          {loading ? (
+            <span className="flex items-center gap-2">
+              <span className="w-3.5 h-3.5 border-2 border-white/30 border-t-white rounded-full animate-spin" />
+              {running ? 'Stopping' : 'Starting'}
+            </span>
+          ) : running ? 'Stop Bot' : 'Start Bot'}
+        </button>
+      </div>
     </div>
   )
 }

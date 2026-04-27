@@ -1,15 +1,52 @@
 import { useBotStore } from '../store/botStore'
 
-const SCORE_COLORS = ['bg-gray-700', 'bg-red-900', 'bg-orange-800', 'bg-yellow-700', 'bg-emerald-700', 'bg-emerald-500']
+const SCORE_FILLS = [
+  '',
+  'bg-slate-600',
+  'bg-rose-800',
+  'bg-amber-700',
+  'bg-emerald-700',
+  'bg-emerald-500',
+]
+
+function ScoreBar({ score }: { score: number }) {
+  return (
+    <div className="flex items-center gap-1.5">
+      {[1, 2, 3, 4, 5].map((i) => (
+        <div
+          key={i}
+          className={`h-1.5 flex-1 rounded-full transition-all duration-300 ${
+            i <= score ? SCORE_FILLS[score] : 'bg-slate-800'
+          }`}
+        />
+      ))}
+      <span className="text-xs font-mono text-slate-400 ml-1 w-6 text-right">{score}/5</span>
+    </div>
+  )
+}
+
+function Badge({ label, value }: { label: string; value: string }) {
+  return (
+    <div className="bg-slate-800/60 border border-slate-700/40 rounded-lg px-3 py-1.5 text-center">
+      <p className="text-[10px] text-slate-500 uppercase tracking-widest">{label}</p>
+      <p className="text-xs font-semibold text-slate-200 font-mono mt-0.5">{value}</p>
+    </div>
+  )
+}
 
 export function SignalPanel() {
   const { lastSignal } = useBotStore()
 
   if (!lastSignal || lastSignal.direction === 'NONE') {
     return (
-      <div className="bg-gray-900 border border-gray-800 rounded-lg p-4">
-        <p className="text-gray-500 text-xs uppercase tracking-widest mb-3">Latest Signal</p>
-        <p className="text-gray-600 text-sm">Waiting for signal...</p>
+      <div className="bg-slate-900/70 border border-slate-800 rounded-xl p-5 backdrop-blur-sm">
+        <p className="text-slate-500 text-[10px] uppercase tracking-widest font-medium mb-4">
+          Latest Signal
+        </p>
+        <div className="flex items-center gap-2 text-slate-600">
+          <span className="w-1.5 h-1.5 rounded-full bg-slate-700 pulse-dot" />
+          <p className="text-sm">Scanning market — waiting for confluence...</p>
+        </div>
       </div>
     )
   }
@@ -17,34 +54,42 @@ export function SignalPanel() {
   const isCall = lastSignal.direction === 'CALL'
 
   return (
-    <div className={`border rounded-lg p-4 ${isCall ? 'bg-emerald-950 border-emerald-800' : 'bg-red-950 border-red-800'}`}>
-      <p className="text-gray-400 text-xs uppercase tracking-widest mb-3">Latest Signal</p>
+    <div className={`border rounded-xl p-5 backdrop-blur-sm ${
+      isCall
+        ? 'bg-emerald-950/30 border-emerald-900/50'
+        : 'bg-rose-950/30 border-rose-900/50'
+    }`}>
+      <p className="text-slate-400 text-[10px] uppercase tracking-widest font-medium mb-4">
+        Latest Signal
+      </p>
 
-      <div className="flex items-center gap-3 mb-3">
-        <span className={`text-3xl font-bold ${isCall ? 'text-emerald-400' : 'text-red-400'}`}>
-          {lastSignal.direction}
-        </span>
-        <span className="text-gray-400 text-sm">{lastSignal.symbol}</span>
+      <div className="flex items-center justify-between mb-4">
+        <div className="flex items-center gap-3">
+          <span className={`text-4xl font-bold font-mono ${isCall ? 'text-emerald-400' : 'text-rose-400'}`}>
+            {isCall ? '↑' : '↓'} {lastSignal.direction}
+          </span>
+          <span className={`text-sm font-medium px-2.5 py-1 rounded-lg border font-mono ${
+            isCall
+              ? 'text-emerald-400 bg-emerald-950/60 border-emerald-800/60'
+              : 'text-rose-400 bg-rose-950/60 border-rose-800/60'
+          }`}>
+            {lastSignal.symbol}
+          </span>
+        </div>
       </div>
 
-      {/* Score bar */}
-      <div className="flex gap-1 mb-3">
-        {[1, 2, 3, 4, 5].map((i) => (
-          <div
-            key={i}
-            className={`h-2 flex-1 rounded ${i <= lastSignal.score ? SCORE_COLORS[lastSignal.score] : 'bg-gray-800'}`}
-          />
-        ))}
-        <span className="text-xs text-gray-400 ml-2">{lastSignal.score}/5</span>
+      <div className="mb-4">
+        <p className="text-[10px] text-slate-500 uppercase tracking-widest mb-2">Confluence Score</p>
+        <ScoreBar score={lastSignal.score} />
       </div>
 
-      <div className="grid grid-cols-3 gap-2 text-xs text-gray-400 mb-3">
-        <span>Trend: <span className="text-gray-200">{lastSignal.trend}</span></span>
-        <span>Zone: <span className="text-gray-200">{lastSignal.zone}</span></span>
-        <span>RSI: <span className="text-gray-200">{lastSignal.rsi}</span></span>
+      <div className="grid grid-cols-3 gap-2 mb-4">
+        <Badge label="Trend" value={lastSignal.trend} />
+        <Badge label="Zone" value={lastSignal.zone} />
+        <Badge label="RSI" value={lastSignal.rsi.toFixed(1)} />
       </div>
 
-      <p className="text-xs text-gray-500 italic">{lastSignal.reason}</p>
+      <p className="text-xs text-slate-500 italic border-t border-slate-800/60 pt-3">{lastSignal.reason}</p>
     </div>
   )
 }
