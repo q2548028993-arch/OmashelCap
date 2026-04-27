@@ -3,21 +3,31 @@ interface StatCardProps {
   value: string | number
   sub?: string
   color?: 'green' | 'red' | 'yellow' | 'default'
+  mono?: boolean
 }
 
 const colorMap = {
   green: 'text-emerald-400',
-  red: 'text-red-400',
-  yellow: 'text-yellow-400',
-  default: 'text-white',
+  red: 'text-rose-400',
+  yellow: 'text-amber-400',
+  default: 'text-slate-100',
 }
 
-export function StatCard({ label, value, sub, color = 'default' }: StatCardProps) {
+const glowMap = {
+  green: 'border-emerald-900/60',
+  red: 'border-rose-900/60',
+  yellow: 'border-amber-900/60',
+  default: 'border-slate-800',
+}
+
+export function StatCard({ label, value, sub, color = 'default', mono = true }: StatCardProps) {
   return (
-    <div className="bg-gray-900 border border-gray-800 rounded-lg p-4">
-      <p className="text-gray-500 text-xs uppercase tracking-widest mb-1">{label}</p>
-      <p className={`text-2xl font-bold ${colorMap[color]}`}>{value}</p>
-      {sub && <p className="text-gray-500 text-xs mt-1">{sub}</p>}
+    <div className={`bg-slate-900/70 border ${glowMap[color]} rounded-xl p-4 backdrop-blur-sm`}>
+      <p className="text-slate-500 text-[10px] uppercase tracking-widest font-medium mb-2">{label}</p>
+      <p className={`text-2xl font-bold ${colorMap[color]} ${mono ? 'font-mono' : ''} leading-none`}>
+        {value}
+      </p>
+      {sub && <p className="text-slate-600 text-[11px] mt-1.5 font-mono">{sub}</p>}
     </div>
   )
 }
