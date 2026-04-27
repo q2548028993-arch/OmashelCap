@@ -27,17 +27,31 @@ def compute_indicators(df: pd.DataFrame) -> pd.DataFrame:
 
     # Bollinger Bands
     bb = ta.bbands(df["close"], length=20, std=2)
-    if bb is not None:
-        df["bb_upper"] = bb["BBU_20_2.0"]
-        df["bb_lower"] = bb["BBL_20_2.0"]
-        df["bb_mid"] = bb["BBM_20_2.0"]
+    if bb is not None and not bb.empty:
+        cols = bb.columns.tolist()
+        upper = next((c for c in cols if c.startswith("BBU")), None)
+        lower = next((c for c in cols if c.startswith("BBL")), None)
+        mid   = next((c for c in cols if c.startswith("BBM")), None)
+        if upper:
+            df["bb_upper"] = bb[upper]
+        if lower:
+            df["bb_lower"] = bb[lower]
+        if mid:
+            df["bb_mid"] = bb[mid]
 
     # MACD
     macd = ta.macd(df["close"], fast=12, slow=26, signal=9)
-    if macd is not None:
-        df["macd"] = macd["MACD_12_26_9"]
-        df["macd_signal"] = macd["MACDs_12_26_9"]
-        df["macd_hist"] = macd["MACDh_12_26_9"]
+    if macd is not None and not macd.empty:
+        cols = macd.columns.tolist()
+        m   = next((c for c in cols if c.startswith("MACD_")), None)
+        ms  = next((c for c in cols if c.startswith("MACDs_")), None)
+        mh  = next((c for c in cols if c.startswith("MACDh_")), None)
+        if m:
+            df["macd"] = macd[m]
+        if ms:
+            df["macd_signal"] = macd[ms]
+        if mh:
+            df["macd_hist"] = macd[mh]
 
     # ATR for volatility / stop-loss sizing
     df["atr"] = ta.atr(df["high"], df["low"], df["close"], length=14)
