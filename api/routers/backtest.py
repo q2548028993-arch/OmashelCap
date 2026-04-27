@@ -15,7 +15,9 @@ class BacktestRequest(BaseModel):
     symbol: str = Field(default="R_75")
     granularity: int = Field(default=60, description="Candle size in seconds")
     count: int = Field(default=2000, ge=200, le=5000, description="Number of historical candles")
-    trade_duration_bars: int = Field(default=5, ge=1, le=60, description="Trade duration in candles")
+    trade_duration_bars: int = Field(
+        default=5, ge=1, le=60, description="Trade duration in candles"
+    )
     starting_balance: float = Field(default=1000.0, ge=10.0)
     min_score: int = Field(default=3, ge=2, le=5)
 
