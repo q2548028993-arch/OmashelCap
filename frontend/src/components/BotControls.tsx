@@ -55,7 +55,7 @@ export function BotControls() {
 
         <button
           onClick={toggle}
-          disabled={loading || !connected || cbTripped}
+          disabled={loading || !connected}
           className={`px-6 py-2 rounded-lg text-sm font-semibold tracking-wide transition-all duration-150
             disabled:opacity-40 disabled:cursor-not-allowed select-none
             ${running
@@ -68,7 +68,7 @@ export function BotControls() {
               <span className="w-3.5 h-3.5 border-2 border-white/30 border-t-white rounded-full animate-spin" />
               {running ? 'Stopping' : 'Starting'}
             </span>
-          ) : running ? 'Stop Bot' : 'Start Bot'}
+          ) : running ? 'Stop Bot' : cbTripped ? 'Reset & Start' : 'Start Bot'}
         </button>
       </div>
     </div>
