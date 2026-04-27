@@ -166,6 +166,7 @@ class MockBot:
             if bot_state.consecutive_losses >= settings.MAX_CONSECUTIVE_LOSSES:
                 bot_state.cb_tripped = True
                 bot_state.cb_reason = f"{settings.MAX_CONSECUTIVE_LOSSES} consecutive losses"
+                bot_state.running = False
 
         total = bot_state.wins + bot_state.losses
         bot_state.win_rate = round(bot_state.wins / total, 4) if total > 0 else 0
