@@ -6,9 +6,12 @@ Swap this out for the real TradingBot when API credentials are ready.
 import asyncio
 import logging
 import random
+import time
 
 from api.state import bot_state
+from config.settings import settings
 from data.models import TradeSignal
+from notify.telegram import TelegramNotifier
 from storage.db import TradeDB
 
 logger = logging.getLogger(__name__)
@@ -17,25 +20,44 @@ _SYMBOLS = ["R_75", "R_50", "R_100"]
 _DIRECTIONS = ["CALL", "PUT"]
 _TRENDS = ["UPTREND", "DOWNTREND", "RANGE"]
 _ZONES = ["DEMAND", "SUPPLY", "NONE"]
-_WIN_RATE = 0.56          # simulated edge
-_PAYOUT_RATIO = 0.85      # 85% payout on win
-_SIGNAL_INTERVAL = (8, 18)   # seconds between signals
-_TRADE_DURATION = (5, 12)    # seconds a trade stays open
+_WIN_RATE = 0.56
+_PAYOUT_RATIO = 0.85
+_SIGNAL_INTERVAL = (8, 18)
+_TRADE_DURATION = (5, 12)
 
 
 class MockBot:
     def __init__(self):
         self._db = TradeDB()
         self._db.connect()
-        self._trade_counter = 0
+        self._notifier = TelegramNotifier()
+        # Use epoch-based counter so IDs never repeat across restarts
+        self._trade_counter = int(time.time())
 
     async def run(self) -> None:
         self._init_state()
         await bot_state.broadcast("snapshot", self._snapshot())
+
+        if self._notifier.enabled:
+            await self._notifier.send_startup(
+                balance=bot_state.balance,
+                currency=bot_state.currency,
+                symbol=settings.SYMBOL,
+                mode="MOCK",
+            )
+
         logger.info("MockBot started — generating fake signals and trades")
 
         while bot_state.running:
             await asyncio.sleep(random.uniform(*_SIGNAL_INTERVAL))
+
+            if not bot_state.running:
+                break
+
+            if bot_state.cb_tripped:
+                logger.warning("Circuit breaker is active — bot halted, no new trades")
+                break
+
             signal = self._make_signal()
             bot_state.last_signal = signal
 
@@ -64,6 +86,7 @@ class MockBot:
         bot_state.total_trades = 0
         bot_state.consecutive_losses = 0
         bot_state.cb_tripped = False
+        bot_state.cb_reason = ""
 
     def _make_signal(self) -> TradeSignal:
         score = random.randint(0, 5)
@@ -92,17 +115,36 @@ class MockBot:
             trend=trend,
             zone=zone,
             rsi=rsi,
-            stake=round(bot_state.balance * 0.01, 2),
+            stake=round(bot_state.balance * settings.RISK_PER_TRADE, 2),
         )
 
     async def _execute_trade(self, signal: TradeSignal) -> None:
+        if bot_state.cb_tripped or not bot_state.running:
+            return
+
         self._trade_counter += 1
-        contract_id = 100_000 + self._trade_counter
-        stake = round(bot_state.balance * 0.01, 2)
+        contract_id = self._trade_counter
+        stake = max(
+            settings.MIN_STAKE,
+            min(round(bot_state.balance * settings.RISK_PER_TRADE, 2), settings.MAX_STAKE)
+        )
         signal.stake = stake
 
         self._db.log_open(contract_id, signal)
+
+        if self._notifier.enabled:
+            await self._notifier.trade_opened(
+                direction=signal.direction,
+                symbol=signal.symbol,
+                stake=stake,
+                score=signal.score,
+                reason=signal.reason,
+            )
+
         await asyncio.sleep(random.uniform(*_TRADE_DURATION))
+
+        if not bot_state.running:
+            return
 
         is_win = random.random() < _WIN_RATE
         profit = round(stake * _PAYOUT_RATIO if is_win else -stake, 2)
@@ -117,14 +159,25 @@ class MockBot:
         else:
             bot_state.losses += 1
             bot_state.consecutive_losses += 1
-            if bot_state.consecutive_losses >= 5:
+            if bot_state.consecutive_losses >= settings.MAX_CONSECUTIVE_LOSSES:
                 bot_state.cb_tripped = True
-                bot_state.cb_reason = f"5 consecutive losses"
+                bot_state.cb_reason = f"{settings.MAX_CONSECUTIVE_LOSSES} consecutive losses"
 
         total = bot_state.wins + bot_state.losses
         bot_state.win_rate = round(bot_state.wins / total, 4) if total > 0 else 0
 
         self._db.log_close(contract_id, profit, is_win)
+
+        if self._notifier.enabled:
+            await self._notifier.trade_closed(
+                direction=signal.direction,
+                symbol=signal.symbol,
+                profit=profit,
+                balance=bot_state.balance,
+                wins=bot_state.wins,
+                losses=bot_state.losses,
+                session_pnl=bot_state.session_pnl,
+            )
 
         await bot_state.broadcast("trade_closed", {
             "contract_id": contract_id,
@@ -142,10 +195,14 @@ class MockBot:
 
         await bot_state.broadcast("status_update", self._snapshot())
 
+        if bot_state.cb_tripped and self._notifier.enabled:
+            await self._notifier.circuit_tripped(bot_state.cb_reason)
+
         result = "WIN" if is_win else "LOSS"
         logger.info(
             f"[MOCK] {signal.direction} {signal.symbol} → {result} "
-            f"${profit:+.2f} | Balance: ${bot_state.balance:.2f}"
+            f"${profit:+.2f} | Balance: ${bot_state.balance:.2f} | "
+            f"W/L: {bot_state.wins}/{bot_state.losses}"
         )
 
     def _snapshot(self) -> dict:

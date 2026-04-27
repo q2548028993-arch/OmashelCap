@@ -33,6 +33,10 @@ class TelegramNotifier:
         else:
             logger.info("Telegram not configured — notifications disabled")
 
+    @property
+    def enabled(self) -> bool:
+        return self._enabled
+
     async def send(self, text: str) -> None:
         if not self._enabled or self._bot is None:
             return
@@ -45,24 +49,69 @@ class TelegramNotifier:
         except Exception as e:
             logger.warning(f"Telegram send failed: {e}")
 
-    async def trade_opened(self, direction: str, stake: float, score: int, reason: str) -> None:
+    async def send_startup(self, balance: float, currency: str, symbol: str, mode: str) -> None:
         await self.send(
-            f"*TRADE OPEN*\n"
-            f"Direction: `{direction}`\n"
-            f"Stake: `${stake:.2f}`\n"
-            f"Score: `{score}/5`\n"
-            f"Reason: _{reason}_"
+            f"🤖 *OmashelCap Bot Started*\n"
+            f"Symbol: `{symbol}`\n"
+            f"Balance: `{balance:.2f} {currency}`\n"
+            f"Mode: `{mode}`\n"
+            f"Risk per trade: `{settings.RISK_PER_TRADE * 100:.1f}%`\n"
+            f"Max stake: `${settings.MAX_STAKE:.2f}`"
         )
 
-    async def trade_closed(self, direction: str, profit: float, win_rate: float, total_pnl: float) -> None:
-        emoji = "✅" if profit > 0 else "❌"
+    async def send_signal(self, direction: str, symbol: str, score: int, trend: str, zone: str, rsi: float, reason: str) -> None:
+        arrow = "📈" if direction == "CALL" else "📉"
         await self.send(
-            f"{emoji} *TRADE CLOSED*\n"
-            f"Direction: `{direction}`\n"
+            f"{arrow} *Signal Detected*\n"
+            f"Direction: `{direction}` on `{symbol}`\n"
+            f"Score: `{score}/5`\n"
+            f"Trend: `{trend}` | Zone: `{zone}` | RSI: `{rsi:.1f}`\n"
+            f"_{reason}_"
+        )
+
+    async def trade_opened(self, direction: str, symbol: str, stake: float, score: int, reason: str) -> None:
+        arrow = "📈" if direction == "CALL" else "📉"
+        await self.send(
+            f"{arrow} *Trade Opened*\n"
+            f"`{direction}` on `{symbol}`\n"
+            f"Stake: `${stake:.2f}` | Score: `{score}/5`\n"
+            f"_{reason}_"
+        )
+
+    async def trade_closed(self, direction: str, symbol: str, profit: float, balance: float, wins: int, losses: int, session_pnl: float) -> None:
+        emoji = "✅" if profit > 0 else "❌"
+        total = wins + losses
+        win_rate = (wins / total * 100) if total > 0 else 0
+        await self.send(
+            f"{emoji} *Trade Closed*\n"
+            f"`{direction}` on `{symbol}`\n"
             f"Profit: `{profit:+.2f}`\n"
-            f"Win rate: `{win_rate*100:.1f}%`\n"
-            f"Session P&L: `{total_pnl:+.2f}`"
+            f"Balance: `${balance:.2f}`\n"
+            f"Session P&L: `{session_pnl:+.2f}`\n"
+            f"Win rate: `{win_rate:.1f}%` ({wins}W/{losses}L)"
         )
 
     async def circuit_tripped(self, reason: str) -> None:
-        await self.send(f"🚨 *CIRCUIT BREAKER TRIPPED*\n{reason}")
+        await self.send(
+            f"🚨 *Circuit Breaker Tripped*\n"
+            f"{reason}\n"
+            f"_Bot has stopped. Manual review required._"
+        )
+
+    async def send_daily_summary(self, wins: int, losses: int, session_pnl: float, balance: float) -> None:
+        total = wins + losses
+        win_rate = (wins / total * 100) if total > 0 else 0
+        emoji = "📊"
+        await self.send(
+            f"{emoji} *Daily Summary*\n"
+            f"Trades: `{total}` | W/L: `{wins}/{losses}`\n"
+            f"Win rate: `{win_rate:.1f}%`\n"
+            f"Session P&L: `{session_pnl:+.2f}`\n"
+            f"Balance: `${balance:.2f}`"
+        )
+
+    async def test_message(self) -> None:
+        await self.send(
+            "✅ *OmashelCap — Telegram connected*\n"
+            "_You will receive trade alerts here._"
+        )

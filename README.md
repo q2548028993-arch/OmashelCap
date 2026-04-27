@@ -124,16 +124,16 @@ Open **http://localhost:5173**, click **START BOT** — live mock signals and tr
 > ⚠️ **Always start on a demo account. Never risk money you haven't tested with.**
 
 1. Create a free account at [deriv.com](https://deriv.com)
-2. Go to **Account → Security & Limits → API Token**
-   - Create a token with scopes: `read` + `trade`
-3. Register an app at [api.deriv.com](https://api.deriv.com) to get an `APP_ID`
-4. Edit your `.env`:
+2. Go to **[app.deriv.com/account/api-token](https://app.deriv.com/account/api-token)**
+   - Create a token with scopes: `Read` + `Trade`
+   - Copy the token — you only see it once
+3. Edit your `.env`:
 
 ```env
 USE_MOCK=false
-DERIV_APP_ID=your_app_id
-DERIV_API_TOKEN=your_token
-TRADING_MODE=demo           # keep this on demo until you're confident
+DERIV_APP_ID=36544          # Deriv's public WebSocket app ID
+DERIV_API_TOKEN=your_token  # token from step 2
+TRADING_MODE=demo           # keep on demo until confident
 SYMBOL=R_75                 # Volatility 75 Index
 RISK_PER_TRADE=0.01         # 1% of balance per trade
 MAX_STAKE=10.00             # hard ceiling — never exceeded
@@ -202,6 +202,32 @@ The strategy scores each potential trade on 5 conditions. It only enters when **
 
 ---
 
+## Telegram Alerts
+
+The bot sends structured alerts to a Telegram chat for every key event:
+
+| Event | Message |
+|---|---|
+| Bot started | Balance, symbol, mode, risk settings |
+| Trade opened | Direction, symbol, stake, signal score, reason |
+| Trade closed | P&L, updated balance, win rate, session P&L |
+| Circuit breaker | Reason + manual review prompt |
+
+**Setup:**
+1. Message [@BotFather](https://t.me/BotFather) → `/newbot` → copy the token
+2. Start a chat with your bot, then get your chat ID:
+   ```bash
+   curl "https://api.telegram.org/bot<TOKEN>/getUpdates"
+   ```
+3. Add to `.env`:
+   ```env
+   TELEGRAM_BOT_TOKEN=your_bot_token
+   TELEGRAM_CHAT_ID=your_chat_id
+   ```
+4. Test it: `curl -X POST http://localhost:9000/api/signals/test-telegram`
+
+---
+
 ## Running Tests
 
 ```bash
@@ -231,7 +257,7 @@ docker-compose up --build
 ```
 
 Dashboard → `http://localhost:5173`
-API → `http://localhost:8000`
+API → `http://localhost:9000`
 
 ---
 

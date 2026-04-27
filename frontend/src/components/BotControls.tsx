@@ -3,7 +3,7 @@ import axios from 'axios'
 import { useBotStore } from '../store/botStore'
 
 export function BotControls() {
-  const { running, connected, cbTripped, cbReason, consecutiveLosses } = useBotStore()
+  const { running, connected, cbTripped, cbReason, setStatus } = useBotStore()
   const [loading, setLoading] = useState(false)
 
   async function toggle() {
@@ -11,8 +11,10 @@ export function BotControls() {
     try {
       if (running) {
         await axios.post('/api/bot/stop')
+        setStatus({ running: false })
       } else {
         await axios.post('/api/bot/start')
+        setStatus({ running: true })
       }
     } catch (e: any) {
       console.error(e?.response?.data?.detail || e.message)
