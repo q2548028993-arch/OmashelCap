@@ -8,6 +8,7 @@ import { BotControls } from './components/BotControls'
 import { TradeHistory } from './components/TradeHistory'
 import { BacktestPanel } from './components/BacktestPanel'
 import { StrategyConfig } from './components/StrategyConfig'
+import { PriceChart } from './components/PriceChart'
 import './index.css'
 
 const qc = new QueryClient()
@@ -105,6 +106,7 @@ function Dashboard() {
   return (
     <div className="space-y-5">
       <BotControls />
+      <PriceChart />
       <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
         <StatCard
           label="Balance"
