@@ -2,6 +2,7 @@
 Runtime settings update — changes take effect on the next bot start.
 Values are stored in memory only; persist changes to .env manually.
 """
+
 from fastapi import APIRouter
 from pydantic import BaseModel, Field
 
@@ -9,7 +10,17 @@ from config.settings import settings
 
 router = APIRouter()
 
-VALID_SYMBOLS = ["R_10", "R_25", "R_50", "R_75", "R_100", "CRASH1000", "CRASH500", "BOOM1000", "BOOM500"]
+VALID_SYMBOLS = [
+    "R_10",
+    "R_25",
+    "R_50",
+    "R_75",
+    "R_100",
+    "CRASH1000",
+    "CRASH500",
+    "BOOM1000",
+    "BOOM500",
+]
 VALID_GRANULARITIES = [60, 300, 900, 3600]
 
 
@@ -65,12 +76,15 @@ async def update_settings(update: SettingsUpdate):
     if update.max_consecutive_losses is not None:
         settings.MAX_CONSECUTIVE_LOSSES = update.max_consecutive_losses
 
-    return {"status": "updated", "settings": {
-        "symbol": settings.SYMBOL,
-        "granularity": settings.CANDLE_GRANULARITY,
-        "risk_per_trade": settings.RISK_PER_TRADE,
-        "min_stake": settings.MIN_STAKE,
-        "max_stake": settings.MAX_STAKE,
-        "trade_duration": settings.TRADE_DURATION,
-        "max_consecutive_losses": settings.MAX_CONSECUTIVE_LOSSES,
-    }}
+    return {
+        "status": "updated",
+        "settings": {
+            "symbol": settings.SYMBOL,
+            "granularity": settings.CANDLE_GRANULARITY,
+            "risk_per_trade": settings.RISK_PER_TRADE,
+            "min_stake": settings.MIN_STAKE,
+            "max_stake": settings.MAX_STAKE,
+            "trade_duration": settings.TRADE_DURATION,
+            "max_consecutive_losses": settings.MAX_CONSECUTIVE_LOSSES,
+        },
+    }

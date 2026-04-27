@@ -9,6 +9,7 @@ Lookahead note: EMA/RSI/Bollinger are purely backward-looking — no bias.
 Swing detection uses a trailing window here (unlike the live engine which
 uses center=True for display purposes), keeping the backtest clean.
 """
+
 import logging
 import time
 from typing import Any
@@ -24,7 +25,7 @@ from config.settings import settings
 logger = logging.getLogger(__name__)
 
 PAYOUT_RATIO = 0.85
-MIN_BARS_REQUIRED = 60   # warm-up bars before signals start
+MIN_BARS_REQUIRED = 60  # warm-up bars before signals start
 
 
 def _get_trend_trailing(df: pd.DataFrame) -> str:
@@ -75,29 +76,39 @@ def _score_row(df_window: pd.DataFrame, symbol: str) -> tuple[str, int, str]:
     put_score, put_reasons = 0, []
 
     if trend == "UPTREND":
-        call_score += 1; call_reasons.append("structure UPTREND")
+        call_score += 1
+        call_reasons.append("structure UPTREND")
     if trend == "DOWNTREND":
-        put_score += 1; put_reasons.append("structure DOWNTREND")
+        put_score += 1
+        put_reasons.append("structure DOWNTREND")
 
     if ema_trend == "UPTREND":
-        call_score += 1; call_reasons.append("EMA bullish")
+        call_score += 1
+        call_reasons.append("EMA bullish")
     if ema_trend == "DOWNTREND":
-        put_score += 1; put_reasons.append("EMA bearish")
+        put_score += 1
+        put_reasons.append("EMA bearish")
 
     if rsi < 35:
-        call_score += 1; call_reasons.append(f"RSI {rsi:.0f}")
+        call_score += 1
+        call_reasons.append(f"RSI {rsi:.0f}")
     if rsi > 65:
-        put_score += 1; put_reasons.append(f"RSI {rsi:.0f}")
+        put_score += 1
+        put_reasons.append(f"RSI {rsi:.0f}")
 
     if zone == "DEMAND":
-        call_score += 1; call_reasons.append("demand zone")
+        call_score += 1
+        call_reasons.append("demand zone")
     if zone == "SUPPLY":
-        put_score += 1; put_reasons.append("supply zone")
+        put_score += 1
+        put_reasons.append("supply zone")
 
     if bb_lower is not None and not pd.isna(bb_lower) and close <= float(bb_lower):
-        call_score += 1; call_reasons.append("lower BB")
+        call_score += 1
+        call_reasons.append("lower BB")
     if bb_upper is not None and not pd.isna(bb_upper) and close >= float(bb_upper):
-        put_score += 1; put_reasons.append("upper BB")
+        put_score += 1
+        put_reasons.append("upper BB")
 
     min_score = settings.MIN_SCORE if hasattr(settings, "MIN_SCORE") else 3
 
@@ -125,13 +136,13 @@ async def run(
     balance = starting_balance
     trades: list[dict] = []
     equity_curve: list[dict] = [{"time": int(df.iloc[0]["epoch"]), "value": round(balance, 2)}]
-    open_until: int = -1   # bar index when current trade expires (no overlapping trades)
+    open_until: int = -1  # bar index when current trade expires (no overlapping trades)
 
     for i in range(MIN_BARS_REQUIRED, len(df) - trade_duration_bars):
         if i <= open_until:
             continue
 
-        direction, score, reason = _score_row(df.iloc[:i + 1], symbol)
+        direction, score, reason = _score_row(df.iloc[: i + 1], symbol)
 
         if direction == "NONE" or score < min_score:
             continue
@@ -152,25 +163,29 @@ async def run(
 
         open_until = i + trade_duration_bars
 
-        trades.append({
-            "bar": i,
-            "entry_epoch": entry_epoch,
-            "exit_epoch": exit_epoch,
-            "direction": direction,
-            "score": score,
-            "reason": reason,
-            "stake": stake,
-            "entry": entry_close,
-            "exit": exit_close,
-            "profit": profit,
-            "is_win": is_win,
-            "balance": balance,
-        })
+        trades.append(
+            {
+                "bar": i,
+                "entry_epoch": entry_epoch,
+                "exit_epoch": exit_epoch,
+                "direction": direction,
+                "score": score,
+                "reason": reason,
+                "stake": stake,
+                "entry": entry_close,
+                "exit": exit_close,
+                "profit": profit,
+                "is_win": is_win,
+                "balance": balance,
+            }
+        )
 
         equity_curve.append({"time": exit_epoch, "value": balance})
 
     elapsed = round(time.monotonic() - t0, 2)
-    return _build_report(trades, equity_curve, starting_balance, balance, symbol, granularity, count, elapsed)
+    return _build_report(
+        trades, equity_curve, starting_balance, balance, symbol, granularity, count, elapsed
+    )
 
 
 def _build_report(
@@ -232,9 +247,11 @@ def _build_report(
     max_consec_wins = max_consec_losses = cur_w = cur_l = 0
     for t in trades:
         if t["is_win"]:
-            cur_w += 1; cur_l = 0
+            cur_w += 1
+            cur_l = 0
         else:
-            cur_l += 1; cur_w = 0
+            cur_l += 1
+            cur_w = 0
         max_consec_wins = max(max_consec_wins, cur_w)
         max_consec_losses = max(max_consec_losses, cur_l)
 
@@ -262,5 +279,5 @@ def _build_report(
         "max_consec_wins": max_consec_wins,
         "max_consec_losses": max_consec_losses,
         "equity_curve": equity_curve,
-        "trades": trades[-50:],   # last 50 trades for display
+        "trades": trades[-50:],  # last 50 trades for display
     }

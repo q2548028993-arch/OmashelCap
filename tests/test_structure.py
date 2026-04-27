@@ -1,19 +1,20 @@
 import pandas as pd
-import pytest
-from analysis.structure import get_trend, get_ema_trend
+
+from analysis.structure import get_ema_trend, get_trend
 
 
 def _make_df(closes: list[float]) -> pd.DataFrame:
-    n = len(closes)
-    return pd.DataFrame({
-        "open":  closes,
-        "high":  [c + 1 for c in closes],
-        "low":   [c - 1 for c in closes],
-        "close": closes,
-        "ema_9":  closes,
-        "ema_21": [c - 2 for c in closes],
-        "ema_50": [c - 4 for c in closes],
-    })
+    return pd.DataFrame(
+        {
+            "open": closes,
+            "high": [c + 1 for c in closes],
+            "low": [c - 1 for c in closes],
+            "close": closes,
+            "ema_9": closes,
+            "ema_21": [c - 2 for c in closes],
+            "ema_50": [c - 4 for c in closes],
+        }
+    )
 
 
 def test_uptrend_detected():

@@ -1,6 +1,6 @@
 import asyncio
 import logging
-from typing import Callable, Optional
+from collections.abc import Callable
 
 from config.settings import settings
 from data.models import Candle, Tick
@@ -19,13 +19,13 @@ class DataFeed:
         self,
         store: DataStore,
         send_fn: Callable,
-        on_candle_update: Optional[Callable] = None,
+        on_candle_update: Callable | None = None,
     ):
         self._store = store
         self._send = send_fn
         self._on_candle_update = on_candle_update
-        self._tick_sub_id: Optional[str] = None
-        self._candle_sub_id: Optional[str] = None
+        self._tick_sub_id: str | None = None
+        self._candle_sub_id: str | None = None
         self._initialized = asyncio.Event()
 
     async def start(self) -> None:
@@ -35,29 +35,35 @@ class DataFeed:
 
     async def _fetch_candle_history(self) -> None:
         logger.info(f"Fetching candle history for {settings.SYMBOL}...")
-        await self._send({
-            "ticks_history": settings.SYMBOL,
-            "count": settings.CANDLE_HISTORY_COUNT,
-            "end": "latest",
-            "style": "candles",
-            "granularity": settings.CANDLE_GRANULARITY,
-        })
+        await self._send(
+            {
+                "ticks_history": settings.SYMBOL,
+                "count": settings.CANDLE_HISTORY_COUNT,
+                "end": "latest",
+                "style": "candles",
+                "granularity": settings.CANDLE_GRANULARITY,
+            }
+        )
 
     async def _subscribe_ticks(self) -> None:
-        await self._send({
-            "ticks": settings.SYMBOL,
-            "subscribe": 1,
-        })
+        await self._send(
+            {
+                "ticks": settings.SYMBOL,
+                "subscribe": 1,
+            }
+        )
 
     async def _subscribe_candles(self) -> None:
-        await self._send({
-            "ticks_history": settings.SYMBOL,
-            "count": 1,
-            "end": "latest",
-            "style": "candles",
-            "granularity": settings.CANDLE_GRANULARITY,
-            "subscribe": 1,
-        })
+        await self._send(
+            {
+                "ticks_history": settings.SYMBOL,
+                "count": 1,
+                "end": "latest",
+                "style": "candles",
+                "granularity": settings.CANDLE_GRANULARITY,
+                "subscribe": 1,
+            }
+        )
 
     # ── Handlers (registered with MessageRouter) ─────────────────────────────
 

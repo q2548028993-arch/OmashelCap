@@ -2,10 +2,10 @@
 OmashelCap Trading Bot — Entry Point
 Wires: WebSocket client → data feed → signal engine → risk manager → order manager
 """
+
 import asyncio
 import logging
 import sys
-from typing import Optional
 
 from config.settings import settings
 from core.client import DerivClient
@@ -44,14 +44,14 @@ class TradingBot:
 
         # Data
         self.store = DataStore(symbol=settings.SYMBOL)
-        self.feed: Optional[DataFeed] = None
+        self.feed: DataFeed | None = None
 
         # Analysis
         self.strategy = StructureConfluenceStrategy()
 
         # Risk
-        self.risk_manager: Optional[RiskManager] = None
-        self.circuit_breaker: Optional[CircuitBreaker] = None
+        self.risk_manager: RiskManager | None = None
+        self.circuit_breaker: CircuitBreaker | None = None
 
         # Trading
         self.order_manager = OrderManager(send_fn=self.client.send)
@@ -63,7 +63,9 @@ class TradingBot:
 
     async def run(self) -> None:
         self.db.connect()
-        logger.info(f"Starting OmashelCap Bot | Symbol: {settings.SYMBOL} | Mode: {settings.TRADING_MODE}")
+        logger.info(
+            f"Starting OmashelCap Bot | Symbol: {settings.SYMBOL} | Mode: {settings.TRADING_MODE}"
+        )
 
         # Register message handlers
         self.router.register("authorize", self._on_authorize)
@@ -180,7 +182,7 @@ class TradingBot:
         contract_id: int,
         profit: float,
         is_win: bool,
-        signal: Optional[TradeSignal],
+        signal: TradeSignal | None,
     ) -> None:
         self.tracker.close(contract_id, profit, is_win)
         self.db.log_close(contract_id, profit, is_win)
@@ -190,9 +192,7 @@ class TradingBot:
         else:
             self.circuit_breaker.on_loss(self.session.balance)
             if self.circuit_breaker.is_tripped:
-                asyncio.create_task(
-                    self.notifier.circuit_tripped(self.circuit_breaker.trip_reason)
-                )
+                asyncio.create_task(self.notifier.circuit_tripped(self.circuit_breaker.trip_reason))
 
         direction = signal.direction if signal else "?"
         asyncio.create_task(

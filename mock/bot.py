@@ -3,6 +3,7 @@ Mock bot — simulates the real bot's behaviour using fake data.
 Pushes updates to bot_state (same path the real bot uses).
 Swap this out for the real TradingBot when API credentials are ready.
 """
+
 import asyncio
 import logging
 import random
@@ -61,15 +62,18 @@ class MockBot:
             signal = self._make_signal()
             bot_state.last_signal = signal
 
-            await bot_state.broadcast("signal", {
-                "symbol": signal.symbol,
-                "direction": signal.direction,
-                "score": signal.score,
-                "reason": signal.reason,
-                "trend": signal.trend,
-                "zone": signal.zone,
-                "rsi": round(signal.rsi, 2),
-            })
+            await bot_state.broadcast(
+                "signal",
+                {
+                    "symbol": signal.symbol,
+                    "direction": signal.direction,
+                    "score": signal.score,
+                    "reason": signal.reason,
+                    "trend": signal.trend,
+                    "zone": signal.zone,
+                    "rsi": round(signal.rsi, 2),
+                },
+            )
 
             if signal.direction != "NONE":
                 asyncio.create_task(self._execute_trade(signal))
@@ -126,7 +130,7 @@ class MockBot:
         contract_id = self._trade_counter
         stake = max(
             settings.MIN_STAKE,
-            min(round(bot_state.balance * settings.RISK_PER_TRADE, 2), settings.MAX_STAKE)
+            min(round(bot_state.balance * settings.RISK_PER_TRADE, 2), settings.MAX_STAKE),
         )
         signal.stake = stake
 
@@ -179,19 +183,22 @@ class MockBot:
                 session_pnl=bot_state.session_pnl,
             )
 
-        await bot_state.broadcast("trade_closed", {
-            "contract_id": contract_id,
-            "direction": signal.direction,
-            "symbol": signal.symbol,
-            "stake": stake,
-            "profit": profit,
-            "is_win": is_win,
-            "balance": bot_state.balance,
-            "session_pnl": bot_state.session_pnl,
-            "wins": bot_state.wins,
-            "losses": bot_state.losses,
-            "win_rate": bot_state.win_rate,
-        })
+        await bot_state.broadcast(
+            "trade_closed",
+            {
+                "contract_id": contract_id,
+                "direction": signal.direction,
+                "symbol": signal.symbol,
+                "stake": stake,
+                "profit": profit,
+                "is_win": is_win,
+                "balance": bot_state.balance,
+                "session_pnl": bot_state.session_pnl,
+                "wins": bot_state.wins,
+                "losses": bot_state.losses,
+                "win_rate": bot_state.win_rate,
+            },
+        )
 
         await bot_state.broadcast("status_update", self._snapshot())
 

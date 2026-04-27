@@ -52,10 +52,10 @@ class Candle:
 @dataclass
 class TradeSignal:
     symbol: str
-    direction: str       # "CALL" | "PUT" | "NONE"
-    score: int           # 0–5 confluence score
-    reason: str          # human-readable explanation
-    trend: str           # "UPTREND" | "DOWNTREND" | "RANGE"
-    zone: str            # "DEMAND" | "SUPPLY" | "NONE"
+    direction: str  # "CALL" | "PUT" | "NONE"
+    score: int  # 0–5 confluence score
+    reason: str  # human-readable explanation
+    trend: str  # "UPTREND" | "DOWNTREND" | "RANGE"
+    zone: str  # "DEMAND" | "SUPPLY" | "NONE"
     rsi: float
     stake: float = 0.0

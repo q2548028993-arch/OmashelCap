@@ -1,6 +1,5 @@
 import logging
 from collections import deque
-from typing import Deque, List, Optional
 
 import pandas as pd
 
@@ -18,9 +17,9 @@ class DataStore:
 
     def __init__(self, symbol: str):
         self.symbol = symbol
-        self._ticks: Deque[Tick] = deque(maxlen=settings.TICK_BUFFER_SIZE)
-        self._candles: List[Candle] = []
-        self._df: Optional[pd.DataFrame] = None
+        self._ticks: deque[Tick] = deque(maxlen=settings.TICK_BUFFER_SIZE)
+        self._candles: list[Candle] = []
+        self._df: pd.DataFrame | None = None
         self._df_dirty = True
 
     # ── Ticks ────────────────────────────────────────────────────────────────
@@ -29,16 +28,16 @@ class DataStore:
         self._ticks.append(tick)
 
     @property
-    def latest_tick(self) -> Optional[Tick]:
+    def latest_tick(self) -> Tick | None:
         return self._ticks[-1] if self._ticks else None
 
     @property
-    def ticks(self) -> List[Tick]:
+    def ticks(self) -> list[Tick]:
         return list(self._ticks)
 
     # ── Candles ──────────────────────────────────────────────────────────────
 
-    def load_candles(self, candles: List[Candle]) -> None:
+    def load_candles(self, candles: list[Candle]) -> None:
         self._candles = sorted(candles, key=lambda c: c.epoch)
         self._df_dirty = True
         logger.info(f"[{self.symbol}] Loaded {len(self._candles)} candles")

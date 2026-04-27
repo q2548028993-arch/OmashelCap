@@ -3,10 +3,9 @@ import logging
 import pandas as pd
 
 from analysis.indicators import compute_indicators
-from analysis.structure import get_trend, get_ema_trend
+from analysis.structure import get_ema_trend, get_trend
 from analysis.zones import detect_zone
 from data.models import TradeSignal
-from config.settings import settings
 
 logger = logging.getLogger(__name__)
 

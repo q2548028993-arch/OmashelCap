@@ -31,7 +31,7 @@ def compute_indicators(df: pd.DataFrame) -> pd.DataFrame:
         cols = bb.columns.tolist()
         upper = next((c for c in cols if c.startswith("BBU")), None)
         lower = next((c for c in cols if c.startswith("BBL")), None)
-        mid   = next((c for c in cols if c.startswith("BBM")), None)
+        mid = next((c for c in cols if c.startswith("BBM")), None)
         if upper:
             df["bb_upper"] = bb[upper]
         if lower:
@@ -43,9 +43,9 @@ def compute_indicators(df: pd.DataFrame) -> pd.DataFrame:
     macd = ta.macd(df["close"], fast=12, slow=26, signal=9)
     if macd is not None and not macd.empty:
         cols = macd.columns.tolist()
-        m   = next((c for c in cols if c.startswith("MACD_")), None)
-        ms  = next((c for c in cols if c.startswith("MACDs_")), None)
-        mh  = next((c for c in cols if c.startswith("MACDh_")), None)
+        m = next((c for c in cols if c.startswith("MACD_")), None)
+        ms = next((c for c in cols if c.startswith("MACDs_")), None)
+        mh = next((c for c in cols if c.startswith("MACDh_")), None)
         if m:
             df["macd"] = macd[m]
         if ms:

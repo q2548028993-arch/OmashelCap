@@ -1,7 +1,7 @@
 import asyncio
 import json
 import logging
-from typing import Callable, Optional
+from collections.abc import Callable
 
 import websockets
 from websockets.exceptions import ConnectionClosedError, ConnectionClosedOK
@@ -20,7 +20,7 @@ class DerivClient:
 
     def __init__(self, on_message: Callable[[dict], None]):
         self._on_message = on_message
-        self._ws: Optional[websockets.WebSocketClientProtocol] = None
+        self._ws: websockets.WebSocketClientProtocol | None = None
         self._connected = asyncio.Event()
         self._running = False
         self._req_id = 0
@@ -73,9 +73,7 @@ class DerivClient:
             try:
                 msg = json.loads(raw)
                 if msg.get("msg_type") != "ping":
-                    await asyncio.get_event_loop().run_in_executor(
-                        None, self._on_message, msg
-                    )
+                    await asyncio.get_event_loop().run_in_executor(None, self._on_message, msg)
             except Exception as e:
                 logger.error(f"Message handling error: {e}")
 

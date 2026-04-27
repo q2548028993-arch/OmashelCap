@@ -22,7 +22,7 @@ class RiskManager:
         stake = max(settings.MIN_STAKE, min(raw, settings.MAX_STAKE))
         logger.debug(
             f"Stake computed: {stake:.2f} "
-            f"(balance={self._balance:.2f}, risk={settings.RISK_PER_TRADE*100:.1f}%)"
+            f"(balance={self._balance:.2f}, risk={settings.RISK_PER_TRADE * 100:.1f}%)"
         )
         return round(stake, 2)
 

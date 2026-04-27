@@ -1,9 +1,7 @@
-import asyncio
 import logging
 import sqlite3
 from datetime import datetime
 from pathlib import Path
-from typing import Optional
 
 from data.models import TradeSignal
 
@@ -18,7 +16,7 @@ class TradeDB:
     """
 
     def __init__(self):
-        self._conn: Optional[sqlite3.Connection] = None
+        self._conn: sqlite3.Connection | None = None
 
     def connect(self) -> None:
         self._conn = sqlite3.connect(DB_PATH, check_same_thread=False)

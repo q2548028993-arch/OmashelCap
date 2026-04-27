@@ -1,5 +1,5 @@
 import logging
-from datetime import datetime, date, UTC
+from datetime import UTC, date, datetime
 
 from config.settings import settings
 
@@ -44,8 +44,7 @@ class CircuitBreaker:
     def on_loss(self, current_balance: float) -> None:
         self._consecutive_losses += 1
         logger.warning(
-            f"Circuit breaker: loss #{self._consecutive_losses} | "
-            f"balance={current_balance:.2f}"
+            f"Circuit breaker: loss #{self._consecutive_losses} | balance={current_balance:.2f}"
         )
         self._check_consecutive_losses()
         self._check_daily_drawdown(current_balance)
@@ -63,8 +62,8 @@ class CircuitBreaker:
         drawdown = (self._opening_balance - current_balance) / self._opening_balance
         if drawdown >= settings.DAILY_DRAWDOWN_LIMIT:
             self._trip(
-                f"Daily drawdown limit hit: {drawdown*100:.1f}% "
-                f"(limit={settings.DAILY_DRAWDOWN_LIMIT*100:.1f}%)"
+                f"Daily drawdown limit hit: {drawdown * 100:.1f}% "
+                f"(limit={settings.DAILY_DRAWDOWN_LIMIT * 100:.1f}%)"
             )
 
     def _trip(self, reason: str) -> None:
@@ -86,7 +85,9 @@ class CircuitBreaker:
         self._trip_reason = ""
 
     def manual_reset(self, new_opening_balance: float) -> None:
-        logger.warning(f"Circuit breaker manually reset. New opening balance: {new_opening_balance:.2f}")
+        logger.warning(
+            f"Circuit breaker manually reset. New opening balance: {new_opening_balance:.2f}"
+        )
         self._opening_balance = new_opening_balance
         self._consecutive_losses = 0
         self._tripped = False

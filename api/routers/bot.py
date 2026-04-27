@@ -44,9 +44,11 @@ async def start_bot():
 
     if USE_MOCK:
         from mock.bot import MockBot
+
         bot = MockBot()
     else:
         from main import TradingBot
+
         bot = TradingBot()
 
     bot_state._task = asyncio.create_task(bot.run())

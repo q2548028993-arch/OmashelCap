@@ -2,7 +2,6 @@ import csv
 import io
 import sqlite3
 from pathlib import Path
-from typing import Optional
 
 from fastapi import APIRouter, Query
 from fastapi.responses import StreamingResponse
@@ -19,7 +18,7 @@ def _get_conn():
 async def get_trades(
     limit: int = Query(default=50, le=500),
     offset: int = Query(default=0, ge=0),
-    direction: Optional[str] = None,
+    direction: str | None = None,
 ):
     if not DB_PATH.exists():
         return {"trades": [], "total": 0}
@@ -46,11 +45,19 @@ async def get_trades(
 
         trades = [
             {
-                "contract_id": r[0], "symbol": r[1], "direction": r[2],
-                "stake": r[3], "score": r[4], "reason": r[5],
-                "trend": r[6], "zone": r[7], "rsi": r[8],
-                "profit": r[9], "is_win": bool(r[10]),
-                "opened_at": r[11], "closed_at": r[12],
+                "contract_id": r[0],
+                "symbol": r[1],
+                "direction": r[2],
+                "stake": r[3],
+                "score": r[4],
+                "reason": r[5],
+                "trend": r[6],
+                "zone": r[7],
+                "rsi": r[8],
+                "profit": r[9],
+                "is_win": bool(r[10]),
+                "opened_at": r[11],
+                "closed_at": r[12],
             }
             for r in rows
         ]
@@ -113,9 +120,23 @@ async def export_csv():
 
     output = io.StringIO()
     writer = csv.writer(output)
-    writer.writerow(["contract_id", "symbol", "direction", "stake", "score",
-                     "reason", "trend", "zone", "rsi", "profit", "is_win",
-                     "opened_at", "closed_at"])
+    writer.writerow(
+        [
+            "contract_id",
+            "symbol",
+            "direction",
+            "stake",
+            "score",
+            "reason",
+            "trend",
+            "zone",
+            "rsi",
+            "profit",
+            "is_win",
+            "opened_at",
+            "closed_at",
+        ]
+    )
     writer.writerows(rows)
     output.seek(0)
 

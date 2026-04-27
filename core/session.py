@@ -1,6 +1,5 @@
 import asyncio
 import logging
-from typing import Optional
 
 from config.settings import settings
 
@@ -17,7 +16,7 @@ class Session:
         self.authorized = asyncio.Event()
         self.balance: float = 0.0
         self.currency: str = "USD"
-        self.account_id: Optional[str] = None
+        self.account_id: str | None = None
         self.is_virtual: bool = True
 
     async def authorize(self, send_fn) -> None:
